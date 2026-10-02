@@ -1,11 +1,11 @@
 import argparse
 import sys
 
-from scanner.detector import detect_843419
 from scanner.loader import ScanError
 from scanner.report import print_text_report
+from scanner.rules import rule_detectors
 
-RULES = {"843419": detect_843419}
+RULES = rule_detectors()
 
 
 def main():

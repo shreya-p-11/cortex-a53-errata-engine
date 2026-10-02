@@ -14,6 +14,9 @@ BRANCH_PREFIX = ("b.", "bc.", "bra", "blra", "ret", "eret")
 HINT1 = ("relink with --fix-cortex-a53-843419, or insert a NOP so more than two "
          "instructions separate the ADRP and the final load/store")
 HINT2 = "remove the ADRP or place a NOP directly after it"
+HINT_835769 = "insert a NOP between the memory instruction and multiply-accumulate"
+MADD_64 = {"madd", "msub"}
+MADD_LONG_64 = {"smaddl", "smsubl", "umaddl", "umsubl"}
 
 
 def word(ins):
@@ -90,6 +93,19 @@ def is_dependent_final(md, ins, rn):
     return is_unsigned_imm(ins) and mem_base(md, ins) == rn
 
 
+def is_memory_instruction(ins):
+    return any(op.type == CS_OP_MEM for op in ins.operands)
+
+
+def is_835769_multiply_accumulate(ins):
+    if ins.mnemonic not in MADD_64 | MADD_LONG_64:
+        return False
+    if ins.mnemonic in MADD_64 and not (word(ins) & (1 << 31)):
+        return False
+    accumulator = (word(ins) >> 10) & 0x1F
+    return accumulator != 31
+
+
 def match_seq1(md, insns, i):
     adrp = insns[i]
     if adrp.address % PAGE not in SEQ1_OFFSETS or i + 2 >= len(insns):
@@ -151,4 +167,27 @@ def detect_843419(path):
                         "pattern": " ; ".join(f"{x.mnemonic} {x.op_str}" for x in m),
                         "fix_hint": hint,
                     })
+    return findings
+
+
+def detect_835769(path):
+    md = Cs(CS_ARCH_ARM64, CS_MODE_ARM)
+    md.detail = True
+    findings = []
+    for sec in load_code_sections(path):
+        insns = list(md.disasm(sec["data"], sec["addr"]))
+        for first, second in zip(insns, insns[1:]):
+            if not is_memory_instruction(first) or not is_835769_multiply_accumulate(second):
+                continue
+            findings.append({
+                "errata_id": "835769",
+                "sequence": "sequence_1",
+                "address": first.address,
+                "section": sec["name"],
+                "status": "VULNERABLE",
+                "pattern": " ; ".join(
+                    f"{ins.mnemonic} {ins.op_str}" for ins in (first, second)
+                ),
+                "fix_hint": HINT_835769,
+            })
     return findings
