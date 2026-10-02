@@ -1,6 +1,7 @@
 from capstone import (Cs, CS_ARCH_ARM64, CS_MODE_ARM, CS_OP_REG, CS_OP_MEM,
                       CS_AC_READ, CS_AC_WRITE)
 from scanner.loader import load_code_sections
+from scanner.mapping import is_code_address
 
 PAGE = 0x1000
 SEQ1_OFFSETS = (0xFF8, 0xFFC)
@@ -155,9 +156,11 @@ def detect_843419(path):
         for i, ins in enumerate(insns):
             if ins.mnemonic != "adrp":
                 continue
+            if not is_code_address(sec, ins.address):
+                continue
             for seq, matcher, hint in ((1, match_seq1, HINT1), (2, match_seq2, HINT2)):
                 m = matcher(md, insns, i)
-                if m:
+                if m and all(is_code_address(sec, matched.address) for matched in m):
                     findings.append({
                         "errata_id": "843419",
                         "sequence": seq,
