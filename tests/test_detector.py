@@ -23,6 +23,9 @@ CLEAN = [
     "too_far.elf",
     "writes_rn.elf",
     "not_unsigned.elf",
+]
+
+MITIGATED = [
     "seq1_basic_fixed.elf",
     "far_target_fixed.elf",
 ]
@@ -40,6 +43,14 @@ def test_vulnerable_binaries_are_flagged(name, seq):
 @pytest.mark.parametrize("name", CLEAN)
 def test_clean_binaries_have_no_findings(name):
     assert detect_843419(str(PRE / name)) == []
+
+
+@pytest.mark.parametrize("name", MITIGATED)
+def test_linker_fixed_binaries_are_mitigated(name):
+    findings = detect_843419(str(PRE / name))
+    assert len(findings) == 1
+    assert findings[0]["status"] == "MITIGATED"
+    assert findings[0]["errata_id"] == "843419"
 
 
 def test_finding_addresses():

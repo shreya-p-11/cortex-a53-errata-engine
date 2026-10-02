@@ -1,0 +1,6 @@
+id: "843419"
+name: Cortex-A53 erratum 843419
+implementation: detect_843419
+description: ADRP and dependent load/store sequences on AArch64.
+sequence: structural
+status: VULNERABLE
