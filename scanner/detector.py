@@ -2,6 +2,7 @@ from capstone import (Cs, CS_ARCH_ARM64, CS_MODE_ARM, CS_OP_REG, CS_OP_MEM,
                       CS_AC_READ, CS_AC_WRITE)
 from scanner.loader import load_code_sections
 from scanner.mapping import is_code_address
+from scanner.mitigation import find_843419_mitigation
 
 PAGE = 0x1000
 SEQ1_OFFSETS = (0xFF8, 0xFFC)
@@ -154,9 +155,21 @@ def detect_843419(path):
     for sec in load_code_sections(path):
         insns = list(md.disasm(sec["data"], sec["addr"]))
         for i, ins in enumerate(insns):
-            if ins.mnemonic != "adrp":
+            mitigation = find_843419_mitigation(md, sec, insns, i)
+            if mitigation:
+                findings.append({
+                    "errata_id": "843419",
+                    "sequence": 1,
+                    "address": ins.address,
+                    "section": sec["name"],
+                    "status": "MITIGATED",
+                    "pattern": " ; ".join(
+                        f"{matched.mnemonic} {matched.op_str}" for matched in mitigation
+                    ),
+                    "fix_hint": HINT1,
+                })
                 continue
-            if not is_code_address(sec, ins.address):
+            if ins.mnemonic != "adrp" or not is_code_address(sec, ins.address):
                 continue
             for seq, matcher, hint in ((1, match_seq1, HINT1), (2, match_seq2, HINT2)):
                 m = matcher(md, insns, i)

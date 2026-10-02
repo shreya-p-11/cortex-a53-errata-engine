@@ -10,16 +10,12 @@ class ScanError(Exception):
     """A problem with the input that should be shown as a clean message."""
 
 
-def _mapping_symbols(elf):
+def _symbols(elf):
     symbols = {}
     for symbol_table in elf.iter_sections():
         if symbol_table["sh_type"] != "SHT_SYMTAB":
             continue
         for symbol in symbol_table.iter_symbols():
-            kind = mapping_symbol_kind(symbol.name)
-            if (kind is None or symbol["st_info"]["bind"] != "STB_LOCAL"
-                    or symbol["st_info"]["type"] != "STT_NOTYPE"):
-                continue
             section_index = symbol["st_shndx"]
             if not isinstance(section_index, int):
                 continue
@@ -30,9 +26,23 @@ def _mapping_symbols(elf):
                 "address": symbol["st_value"],
                 "section_index": section_index,
                 "section": section.name if section is not None else None,
-                "kind": kind,
+                "kind": mapping_symbol_kind(symbol.name),
+                "bind": symbol["st_info"]["bind"],
+                "type": symbol["st_info"]["type"],
             })
     return symbols
+
+
+def _mapping_symbols(symbols):
+    return {
+        section_index: [
+            symbol for symbol in section_symbols
+            if symbol["kind"] is not None
+            and symbol["bind"] == "STB_LOCAL"
+            and symbol["type"] == "STT_NOTYPE"
+        ]
+        for section_index, section_symbols in symbols.items()
+    }
 
 
 def load_code_sections(path, allow_relocatable=False):
@@ -48,7 +58,8 @@ def load_code_sections(path, allow_relocatable=False):
                     "This is an unlinked object file (.o). Errata depend on final "
                     "addresses, so link it into an ELF first."
                 )
-            mapping_symbols = _mapping_symbols(elf)
+            symbols = _symbols(elf)
+            mapping_symbols = _mapping_symbols(symbols)
             for section_index, sec in enumerate(elf.iter_sections()):
                 if sec["sh_type"] == "SHT_PROGBITS" and sec["sh_flags"] & SHF_EXECINSTR:
                     sections.append(
@@ -57,6 +68,7 @@ def load_code_sections(path, allow_relocatable=False):
                             "addr": sec["sh_addr"],
                             "size": sec["sh_size"],
                             "data": sec.data(),
+                            "symbols": symbols.get(section_index, []),
                             "mapping_symbols": mapping_symbols.get(section_index, []),
                         }
                     )
