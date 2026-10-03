@@ -41,7 +41,7 @@ def main():
         if args.html:
             write_html(result, args.html)
             print(f"HTML report: {args.html}")
-    return 1 if findings else 0   # 0 = clean, 1 = findings, 2 = error
+    return 1 if any(f["status"] == "VULNERABLE" for f in findings) else 0
 
 
 if __name__ == "__main__":

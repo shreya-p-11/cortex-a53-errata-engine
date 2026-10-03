@@ -16,6 +16,7 @@ BRANCH_PREFIX = ("b.", "bc.", "bra", "blra", "ret", "eret")
 HINT1 = ("relink with --fix-cortex-a53-843419, or insert a NOP so more than two "
          "instructions separate the ADRP and the final load/store")
 HINT2 = "remove the ADRP or place a NOP directly after it"
+HINT_MITIGATED = "Linker workaround detected at this location; no action needed"
 HINT_835769 = "insert a NOP between the memory instruction and multiply-accumulate"
 MADD_64 = {"madd", "msub"}
 MADD_LONG_64 = {"smaddl", "smsubl", "umaddl", "umsubl"}
@@ -166,7 +167,7 @@ def detect_843419(path):
                     "pattern": " ; ".join(
                         f"{matched.mnemonic} {matched.op_str}" for matched in mitigation
                     ),
-                    "fix_hint": HINT1,
+                    "fix_hint": HINT_MITIGATED,
                 })
                 continue
             if ins.mnemonic != "adrp" or not is_code_address(sec, ins.address):

@@ -82,3 +82,7 @@ def test_cli_exit_code_missing_file():
 def test_cli_rejects_object_file():
     r = run_cli("--elf", str(ROOT / "hello.c"))
     assert r.returncode == 2
+
+
+def test_cli_mitigated_exit_code_is_zero():
+    assert run_cli("--elf", str(PRE / "seq1_basic_fixed.elf")).returncode == 0

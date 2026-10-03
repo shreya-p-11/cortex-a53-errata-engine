@@ -52,7 +52,9 @@ def build_result(findings, elf_path, rules_checked=None):
         "tool_version": TOOL_VERSION,
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "binary": {"path": elf_path, "sha256": sha256_of(elf_path)},
-        "scan_result": "FAIL" if findings else "PASS",
+        "scan_result": "FAIL" if any(
+            finding["status"] == "VULNERABLE" for finding in findings
+        ) else "PASS",
         "findings": [_serialized_finding(finding) for finding in findings],
         "summary": {
             "total_findings": len(findings),
