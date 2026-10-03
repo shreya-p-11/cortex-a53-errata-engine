@@ -4,3 +4,22 @@ implementation: detect_835769
 description: Memory instruction followed by a qualifying 64-bit integer multiply-accumulate.
 sequence: sequence_1
 status: VULNERABLE
+# The repository contains no verified processor-revision applicability data.
+affected_revisions: unresolved
+structural:
+  sequences:
+    - name: sequence_1
+      fix_hint: insert a NOP between the memory instruction and multiply-accumulate
+      window:
+        min: 2
+        max: 2
+      steps:
+        - kind: memory_operand
+        - mnemonics: [madd, msub, smaddl, smsubl, umaddl, umsubl]
+          encoding:
+            fields:
+              - bits: [31, 31]
+                when_mnemonics: [madd, msub]
+                equals: 1
+              - bits: [10, 14]
+                not_equals: 31

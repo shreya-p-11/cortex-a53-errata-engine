@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from scanner.report import print_json_report, print_text_report, report_data
+from scanner.report import build_result, print_json_report, print_text_report, report_data, write_html
 
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -91,6 +91,28 @@ def test_json_report_verdicts(findings, verdict, capsys):
     report = json.loads(capsys.readouterr().out)
     assert report["verdict"] == verdict
     assert report["findings"] == report_data(findings, "sample.elf")["findings"]
+
+
+@pytest.mark.parametrize(
+    "findings, banner, has_table",
+    [
+        ([finding("MITIGATED")], "PASS", True),
+        ([finding("VULNERABLE")], "VULNERABLE", True),
+        ([], "CLEAN", False),
+    ],
+)
+def test_html_report_preserves_mitigated_findings(tmp_path, findings, banner, has_table):
+    result = build_result(findings, __file__)
+    path = tmp_path / "report.html"
+
+    write_html(result, str(path))
+
+    output = path.read_text(encoding="utf-8")
+    assert banner in output
+    assert ("<table" in output) is has_table
+    if findings:
+        assert findings[0]["pattern"] in output
+        assert findings[0]["fix_hint"] in output
 
 
 @pytest.mark.parametrize("fmt,expected_code", [("text", 1), ("json", 1)])

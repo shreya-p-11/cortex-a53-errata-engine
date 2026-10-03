@@ -4,3 +4,61 @@ implementation: detect_843419
 description: ADRP and dependent load/store sequences on AArch64.
 sequence: structural
 status: VULNERABLE
+mitigation_implementation: find_843419_mitigation
+mitigated_fix_hint: Linker workaround detected at this location; no action needed
+structural:
+  scope: code
+  sequences:
+    - name: 1
+      fix_hint: relink with --fix-cortex-a53-843419, or insert a NOP so more than two instructions separate the ADRP and the final load/store
+      window:
+        min: 3
+        max: 4
+      steps:
+        - mnemonics: [adrp]
+          address:
+            modulo: 4096
+            one_of: [4088, 4092]
+          capture:
+            register:
+              operand: 0
+              as: rn
+        - kind: load_store
+          mnemonics_not: [ldp, ldnp, ldpsw, ldxp, ldaxp, stxp, stlxp,
+                          ld1, ld2, ld3, ld4, st2, st3, st4]
+          registers:
+            writes:
+              not_contains: $rn
+        - optional: true
+          branch: false
+          registers:
+            writes:
+              not_contains: $rn
+        - kind: unsigned_immediate_load_store
+          memory:
+            base_equals: $rn
+    - name: 2
+      fix_hint: remove the ADRP or place a NOP directly after it
+      window:
+        min: 4
+        max: 4
+      steps:
+        - mnemonics: [adrp]
+          capture:
+            register:
+              operand: 0
+              as: rn
+        - mnemonics_not: [adrp]
+          branch: false
+          registers:
+            reads:
+              not_contains: $rn
+            writes:
+              contains: $rn
+        - branch: false
+          registers:
+            writes:
+              not_contains: $rn
+        - kind: unsigned_immediate_load_store
+          memory:
+            base_equals: $rn

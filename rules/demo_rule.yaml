@@ -1,0 +1,15 @@
+id: demo_nop_return
+name: Generic NOP/return demonstration
+description: A synthetic rule proving that a new structural rule needs no Python detector.
+sequence: demo_sequence
+status: VULNERABLE
+structural:
+  sequences:
+    - name: nop_then_return
+      fix_hint: demo finding
+      window:
+        min: 2
+        max: 2
+      steps:
+        - mnemonics: [nop]
+        - mnemonics: [ret]

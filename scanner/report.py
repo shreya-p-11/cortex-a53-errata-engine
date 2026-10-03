@@ -200,12 +200,16 @@ def write_html(result, path):
     if verdict == "FAIL":
         banner = (f'<div class="banner fail">VULNERABLE<small>{total} potential '
                   f"finding(s) in this binary</small></div>")
+    elif result["findings"]:
+        banner = (f'<div class="banner pass">PASS<small>{total} mitigated '
+                  f"finding(s) in this binary</small></div>")
+    else:
+        banner = '<div class="banner pass">CLEAN<small>No matching errata patterns detected</small></div>'
+    body = ""
+    if result["findings"]:
         body = ("<div class=\"card\"><table><thead><tr><th>#</th><th>Errata</th><th>Seq</th>"
                 "<th>Address</th><th>Section</th><th>Pattern</th><th>Recommended fix</th>"
                 f"</tr></thead><tbody>{rows}</tbody></table></div>")
-    else:
-        banner = '<div class="banner pass">CLEAN<small>No matching errata patterns detected</small></div>'
-        body = ""
     binary = result["binary"]
     page = (
         "<!DOCTYPE html><html lang='en'><head><meta charset='utf-8'>"

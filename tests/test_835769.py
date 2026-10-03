@@ -25,10 +25,12 @@ def fake_loader(monkeypatch):
 def test_yaml_rules_load_and_bind_detectors():
     rules = load_rules()
 
-    assert set(rules) == {"835769", "843419"}
+    assert set(rules) == {"835769", "843419", "demo_nop_return"}
     assert get_rule("835769").implementation == "detect_835769"
     assert get_rule("835769").detector is detect_835769
     assert rule_detectors()["843419"].__name__ == "detect_843419"
+    assert get_rule("demo_nop_return").implementation is None
+    assert get_rule("demo_nop_return").detector is None
 
 
 def test_memory_followed_by_64_bit_madd_matches(fake_loader):
