@@ -5,7 +5,8 @@ import sys
 from pathlib import Path
 
 from scanner.loader import ScanError
-from scanner.rules import rule_detectors
+from scanner.engine import detect_rule
+from scanner.rules import load_rules
 
 AS = "aarch64-linux-gnu-as"
 LD = "aarch64-linux-gnu-ld"
@@ -26,9 +27,16 @@ def build(src, stem):
 
 
 def scan_all(elf):
+    """Scan an ELF with every configured rule using the generic engine."""
     findings = []
-    for _, detector in sorted(rule_detectors().items()):
-        findings.extend(detector(str(elf)))
+    configured_rules = load_rules()
+    for rule_id in sorted(configured_rules):
+        rule = configured_rules[rule_id]
+        findings.extend(detect_rule(
+            str(elf),
+            rule.path,
+            mitigation_detector=rule.mitigation_detector,
+        ))
     return findings
 
 
