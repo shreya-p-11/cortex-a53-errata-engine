@@ -1,12 +1,10 @@
-#!/usr/bin/env bash
-# Run from the project root: bash samples/build_cases.sh
 set -e
 mkdir -p samples/build
 
 body_only() { sed '1,/Disassembly of section/d'; }
 
-make_case() {  # name, skip bytes, expected detector verdict, assembly body
-  name=$1; skip=$2; expected=$3; body=$4
+make_case() {  # name, skip bytes, expected detector verdict, assembly body, [rule]
+  name=$1; skip=$2; expected=$3; body=$4; rule=${5:-843419}
   cat > samples/build/$name.S <<EOF
     .text
     .global _start
@@ -29,7 +27,7 @@ EOF
   else
     linker="CHANGED"
   fi
-  got=$(python -m scanner.cli --elf samples/build/$name.elf 2>&1 | awk '/^Verdict/ {print $2}')
+  got=$(python -m scanner.cli --elf samples/build/$name.elf --rule $rule 2>&1 | awk '/Verdict:/ {print $3}')
   if [ "$got" = "$expected" ]; then ok="OK"; else ok="MISMATCH"; fi
   printf "%-14s %-11s %-11s %-9s %s\n" "$name" "$expected" "$got" "$linker" "$ok"
 }
@@ -43,3 +41,5 @@ make_case too_far      0xFF8 CLEAN      $'    adrp x0, mydata\n    ldr x2, [x3]\
 make_case writes_rn    0xFF8 CLEAN      $'    adrp x0, mydata\n    ldr x0, [x3]\n    ldr x1, [x0, #8]'
 make_case not_unsigned 0xFF8 CLEAN      $'    adrp x0, mydata\n    ldr x2, [x3]\n    ldur x1, [x0, #1]'
 make_case seq2_basic   0x10  VULNERABLE $'    adrp x0, mydata\n    mov x0, #5\n    nop\n    ldr x1, [x0, #8]'
+make_case e835769_basic 0 VULNERABLE $'    ldr x1, [x2]\n    madd x3, x4, x5, x6' 835769
+make_case e835769_clean 0 CLEAN      $'    ldr x1, [x2]\n    mul x3, x4, x5' 835769

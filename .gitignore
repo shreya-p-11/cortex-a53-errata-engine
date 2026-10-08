@@ -4,3 +4,5 @@ __pycache__/
 samples/build/
 *.o
 reports/
+samples/fixed/
+samples/build/

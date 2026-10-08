@@ -2,6 +2,7 @@ import argparse
 import sys
 
 import yaml
+from scanner.fixer import fix
 from scanner.loader import ScanError
 from scanner.report import (build_result, print_json_report, print_text_report,
                             write_html, write_json)
@@ -28,6 +29,10 @@ def main():
     parser.add_argument("--html", metavar="FILE", help="Also write an HTML report")
     parser.add_argument("--plain", action="store_true",
                         help="Plain text output (no colours or boxes)")
+    parser.add_argument("--fix", action="store_true",
+                        help="Interactively apply automatic workaround if vulnerable")
+    parser.add_argument("--source",
+                        help="Path to the original .S source file (required for --fix)")
     args = parser.parse_args()
 
     if args.validate_rules:
@@ -75,6 +80,21 @@ def main():
         if args.html:
             write_html(result, args.html)
             print(f"HTML report: {args.html}")
+
+    # Interactive fix flow (from your local commit)
+    if findings and args.fix:
+        if not args.source:
+            print("error: --source is required when using --fix", file=sys.stderr)
+            return 2
+
+        prompt = input("\n[!] Vulnerability detected.\nDo you want me to apply the automatic workaround? (y/n): ")
+        if prompt.strip().lower() == 'y':
+            print("\n--- Applying automatic workaround ---")
+            fix_exit_code = fix(args.source)
+            return fix_exit_code
+        else:
+            print("Workaround declined by user.")
+
     return 1 if any(f["status"] == "VULNERABLE" for f in findings) else 0
 
 
