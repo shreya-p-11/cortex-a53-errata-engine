@@ -6,3 +6,5 @@ samples/build/
 reports/
 samples/fixed/
 samples/build/
+samples/*.elf
+*.save
