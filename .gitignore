@@ -8,3 +8,7 @@ samples/fixed/
 samples/build/
 samples/*.elf
 *.save
+*.zip
+__pycache__/
+*.pyc
+samples/fixed/
