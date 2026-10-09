@@ -12,3 +12,7 @@ samples/*.elf
 __pycache__/
 *.pyc
 samples/fixed/
+*.zip
+__pycache__/
+*.pyc
+samples/fixed/
