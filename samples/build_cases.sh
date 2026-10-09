@@ -43,3 +43,5 @@ make_case not_unsigned 0xFF8 CLEAN      $'    adrp x0, mydata\n    ldr x2, [x3]\
 make_case seq2_basic   0x10  VULNERABLE $'    adrp x0, mydata\n    mov x0, #5\n    nop\n    ldr x1, [x0, #8]'
 make_case e835769_basic 0 VULNERABLE $'    ldr x1, [x2]\n    madd x3, x4, x5, x6' 835769
 make_case e835769_clean 0 CLEAN      $'    ldr x1, [x2]\n    mul x3, x4, x5' 835769
+make_case e819472_vuln   0 VULNERABLE $'    dc cvac, x0\n    dc cvau, x1' 819472
+make_case e819472_clean  0 CLEAN      $'    dc civac, x0\n    dc civac, x1' 819472

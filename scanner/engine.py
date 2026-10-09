@@ -10,7 +10,7 @@ BRANCH_PREFIX = ("b.", "bc.", "bra", "blra", "ret", "eret")
 SUPPORTED_STEP_KEYS = {
     "mnemonics", "mnemonics_not", "kind", "encoding", "branch",
     "address", "registers", "memory", "capture", "optional",
-    "branch_target_outside", "symbol_prefix"
+    "branch_target_outside", "symbol_prefix", "op_str"
 }
 SUPPORTED_KINDS = {"any", "load_store", "unsigned_immediate_load_store", "memory_operand"}
 
@@ -221,6 +221,16 @@ def _step_matches(md, section, ins, step, captures):
         return None
     if ins.mnemonic in step.get("mnemonics_not", []):
         return None
+
+    # Generic operand string matching (e.g., "cmvac", "cmvau")
+    op_str = step.get("op_str")
+    if op_str is not None:
+        if isinstance(op_str, list):
+            if not any(s in ins.op_str for s in op_str):
+                return None
+        elif op_str not in ins.op_str:
+            return None
+
     if not _kind_matches(md, ins, step.get("kind")):
         return None
     if not _encoding_matches(ins, step.get("encoding", {})):

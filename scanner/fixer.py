@@ -54,6 +54,15 @@ def apply_fix_action(lines, line_num, fix_action):
         lines[line_num - 1] = f"{indent}{instruction}\n"
         print(f"     ↳ replaced line {line_num} with {instruction}")
 
+    elif action_type == "replace_op_str":
+        old_str = fix_action.get("old")
+        new_str = fix_action.get("new")
+        if old_str in lines[line_num - 1]:
+            lines[line_num - 1] = lines[line_num - 1].replace(old_str, new_str)
+            print(f"     ↳ replaced '{old_str}' with '{new_str}' on line {line_num}")
+        else:
+            print(f"     ↳ WARNING: '{old_str}' not found on line {line_num}")
+
 def fix(source, configured_rules):
     source = Path(source)
     lines = source.read_text().splitlines(keepends=True)
