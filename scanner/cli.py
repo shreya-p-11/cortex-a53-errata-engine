@@ -50,19 +50,11 @@ def main():
             findings = []
             for rule_id in rules_checked:
                 rule = configured_rules[rule_id]
-                findings.extend(detect_rule(
-                    args.elf,
-                    rule.path,
-                    mitigation_detector=rule.mitigation_detector,
-                ))
+                findings.extend(detect_rule(args.elf, rule))
         else:
             rules_checked = [args.rule]
             rule = configured_rules[args.rule]
-            findings = detect_rule(
-                args.elf,
-                rule.path,
-                mitigation_detector=rule.mitigation_detector,
-            )
+            findings = detect_rule(args.elf, rule)
     except (ScanError, OSError, ValueError, KeyError, yaml.YAMLError) as e:
         print(f"error: {e}", file=sys.stderr)
         return 2
@@ -81,7 +73,7 @@ def main():
             write_html(result, args.html)
             print(f"HTML report: {args.html}")
 
-    # Interactive fix flow (from your local commit)
+    # Interactive fix flow
     if findings and args.fix:
         if not args.source:
             print("error: --source is required when using --fix", file=sys.stderr)
@@ -90,7 +82,7 @@ def main():
         prompt = input("\n[!] Vulnerability detected.\nDo you want me to apply the automatic workaround? (y/n): ")
         if prompt.strip().lower() == 'y':
             print("\n--- Applying automatic workaround ---")
-            fix_exit_code = fix(args.source)
+            fix_exit_code = fix(args.source, configured_rules)
             return fix_exit_code
         else:
             print("Workaround declined by user.")

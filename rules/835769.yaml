@@ -1,11 +1,7 @@
 id: "835769"
 name: Cortex-A53 erratum 835769
-implementation: detect_835769
 description: Memory instruction followed by a qualifying 64-bit integer multiply-accumulate.
-sequence: sequence_1
 status: VULNERABLE
-# The repository contains no verified processor-revision applicability data.
-affected_revisions: unresolved
 structural:
   sequences:
     - name: sequence_1
@@ -23,3 +19,7 @@ structural:
                 equals: 1
               - bits: [10, 14]
                 not_equals: 31
+      fix_action:
+        type: insert_instruction
+        instruction: nop
+        position: after
