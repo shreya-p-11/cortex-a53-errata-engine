@@ -45,3 +45,16 @@ make_case e835769_basic 0 VULNERABLE $'    ldr x1, [x2]\n    madd x3, x4, x5, x6
 make_case e835769_clean 0 CLEAN      $'    ldr x1, [x2]\n    mul x3, x4, x5' 835769
 make_case e819472_vuln   0 VULNERABLE $'    dc cvac, x0\n    dc cvau, x1' 819472
 make_case e819472_clean  0 CLEAN      $'    dc civac, x0\n    dc civac, x1' 819472
+# --- Newly fixed errata test cases ---
+
+# 824069: Cache line might not be marked clean after a CleanShared snoop
+make_case e824069_vuln   0 VULNERABLE $'    dc cvac, x0\n    dc cvau, x1' 824069
+make_case e824069_clean  0 CLEAN      $'    dc civac, x0\n    dc civac, x1' 824069
+
+# 826319: System might deadlock if a write cannot complete
+make_case e826319_vuln   0 VULNERABLE $'    dc cvac, x0\n    dc cvau, x1\n    dc csw, x2' 826319
+make_case e826319_clean  0 CLEAN      $'    dc civac, x0\n    dc civac, x1\n    dc cisw, x2' 826319
+
+# 855872: Load-Exclusive followed by Store-Exclusive
+make_case e855872_vuln   0 VULNERABLE $'    str x0, [x1]\n    ldxr x2, [x3]' 855872
+make_case e855872_clean  0 CLEAN      $'    str x0, [x1]\n    dmb sy\n    ldxr x2, [x3]' 855872
